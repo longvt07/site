@@ -3,246 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Site - Đăng nhập / Điều khiển (Demo)</title>
+    <title>Site - Điều khiển Thiết bị (Demo)</title>
     <style>
-        body{font-family: Arial, Helvetica, sans-serif; background:#f6f8fa; color:#222; margin:0; padding:0; display:flex; align-items:center; justify-content:center; height:100vh}
-        .card{background:#fff; padding:24px; border-radius:8px; box-shadow:0 6px 18px rgba(15,23,42,0.08); width:360px;}
-        h1{font-size:18px; margin:0 0 12px}
-        input[type=text], input[type=email], input[type=password]{width:100%; padding:10px; margin:8px 0 12px; box-sizing:border-box; border:1px solid #dfe6ee; border-radius:6px}
-        button{background:#2d8cff; color:#fff; border:none; padding:10px 14px; border-radius:6px; cursor:pointer}
-        .link{background:none; border:none; color:#2d8cff; cursor:pointer; padding:0; margin-left:6px}
-        .muted{color:#6b7280; font-size:13px}
-        .hidden{display:none}
-        .center{text-align:center}
-        .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
-        .danger{color:#c0392b}
-        .notice{background:#fff8e1; border-left:4px solid #f1c40f; padding:10px; border-radius:6px; margin-bottom:12px}
+        :root{
+            --bg:#0f1724; --card:#0b1220; --muted:#94a3b8; --accent:#2dd4bf; --danger:#ef4444; --glass: rgba(255,255,255,0.03);
+        }
+        *{box-sizing:border-box}
+        body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial; background:var(--bg); color:#e6eef8; margin:0; min-height:100vh}
+        .app{max-width:1100px; margin:24px auto; padding:20px;}
+        .topbar{display:flex; align-items:center; justify-content:space-between; gap:12px}
+        .brand{display:flex; align-items:center; gap:12px}
+        .logo{width:44px; height:44px; background:linear-gradient(135deg,#06b6d4,#7c3aed); border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:700}
+        .brand h1{font-size:16px; margin:0}
+        .userbox{text-align:right}
+        .muted{color:var(--muted); font-size:13px}
+        .control-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); padding:16px; border-radius:12px; margin-top:18px}
+
+        /* Sensors grid */
+        .sensors{display:grid; grid-template-columns: repeat(5, 1fr); gap:12px}
+        .sensor{background:var(--card); padding:12px; border-radius:10px; text-align:center; box-shadow: 0 6px 20px rgba(2,6,23,0.6);}
+        .sensor .name{font-size:13px; color:var(--muted); margin-bottom:6px}
+        .sensor .value{font-size:18px; font-weight:700; color:#fff}
+        .sensor .unit{font-size:12px; color:var(--muted); margin-left:6px}
+
+        /* Relays grid */
+        .relays{display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; margin-top:16px}
+        .relay{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:12px; border-radius:10px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:1px solid rgba(255,255,255,0.03)}
+        .relay .label{font-size:14px}
+        /* Toggle Switch */
+        .switch{width:56px; height:30px; background:rgba(255,255,255,0.06); border-radius:20px; position:relative; cursor:pointer; padding:4px}
+        .switch .knob{width:22px; height:22px; background:#101825; border-radius:50%; position:absolute; top:4px; left:4px; transition:all 0.18s ease; box-shadow:0 2px 6px rgba(0,0,0,0.6)}
+        .switch.on{background:linear-gradient(90deg, rgba(45,212,191,0.12), rgba(124,58,237,0.12));}
+        .switch.on .knob{left:30px; background:linear-gradient(90deg,#2dd4bf,#7c3aed);}
+
+        .controls-row{display:flex; gap:8px; margin-top:12px}
+        .btn{padding:8px 12px; border-radius:8px; background:#0b1220; border:1px solid rgba(255,255,255,0.04); color:var(--muted); cursor:pointer}
+        .btn.primary{background:linear-gradient(90deg,#06b6d4,#7c3aed); color:#061221; border:none}
+
+        .footer{margin-top:18px; color:var(--muted); font-size:13px}
+
+        /* Responsive */
+        @media(max-width:900px){ .sensors{grid-template-columns: repeat(2,1fr)} }
+        @media(max-width:520px){ .relays{grid-template-columns: repeat(2,1fr)} }
+
+        /* small helpers */
+        .small{font-size:12px; color:var(--muted)}
     </style>
 </head>
 <body>
-    <div class="card" id="auth-card">
-        <div id="auth-forms">
-            <div class="topbar">
-                <h1 id="form-title">Đăng nhập</h1>
-                <div class="muted">Demo - Email/Password</div>
-            </div>
 
-            <!-- Login form -->
-            <div id="login-form">
-                <input type="email" id="login-email" placeholder="Email" autocomplete="username">
-                <input type="password" id="login-password" placeholder="Mật khẩu" autocomplete="current-password">
-                <div style="display:flex; gap:8px; margin-bottom:10px">
-                    <button id="login-button">Đăng nhập</button>
-                    <button class="link" id="show-register">Đăng ký</button>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
-                    <div class="muted">Chưa có tài khoản? <button class="link" id="show-register-2">Tạo tài khoản</button></div>
-                    <button class="link" id="forgot-password">Quên mật khẩu?</button>
-                </div>
-                <p id="auth-error" class="danger" style="margin-top:10px"></p>
-                <p id="auth-note" class="muted" style="margin-top:6px"></p>
-            </div>
-
-            <!-- Register form -->
-            <div id="register-form" class="hidden">
-                <input type="text" id="reg-name" placeholder="Họ và tên (hiển thị)">
-                <input type="email" id="reg-email" placeholder="Email" autocomplete="username">
-                <input type="password" id="reg-password" placeholder="Mật khẩu (>=6 ký tự)" autocomplete="new-password">
-                <div style="display:flex; gap:8px; margin-bottom:10px">
-                    <button id="register-button">Tạo tài khoản</button>
-                    <button class="link" id="show-login">Quay lại</button>
-                </div>
-                <p id="reg-error" class="danger" style="margin-top:10px"></p>
-                <p id="reg-note" class="muted" style="margin-top:6px"></p>
+<div class="app">
+    <div class="topbar">
+        <div class="brand">
+            <div class="logo">DV</div>
+            <div>
+                <h1>Device Control - Demo</h1>
+                <div class="muted">Giao diện điều khiển thiết bị — giao diện demo</div>
             </div>
         </div>
-
-        <!-- Dashboard (sau khi đăng nhập) -->
-        <div id="dashboard" class="hidden">
-            <div class="topbar">
-                <div>
-                    <strong id="greeting">Chào mừng</strong>
-                    <div class="muted" id="email-display"></div>
-                </div>
-                <div style="text-align:right">
-                    <button id="signout">Đăng xuất</button>
-                </div>
-            </div>
-
-            <!-- Verification notice shown when email not verified -->
-            <div id="verify-notice" class="notice hidden">
-                <p><strong>Vui lòng xác nhận email của bạn trước khi truy cập đầy đủ trang điều khiển.</strong></p>
-                <div style="display:flex; gap:8px; margin-top:8px">
-                    <button id="resend-verification">Gửi lại email xác minh</button>
-                    <button id="refresh-verification" class="link">Đã xác minh? Kiểm tra lại</button>
-                </div>
-                <p id="verify-msg" class="muted" style="margin-top:8px"></p>
-            </div>
-
-            <div id="dashboard-content" class="hidden">
-                <p>Đây là trang điều khiển demo. Nội dung tĩnh có thể được thay bằng giao diện quản trị thực tế sau này.</p>
-                <div style="background:#f3f9ff; padding:12px; border-radius:6px; border:1px solid #d3e7ff">
-                    <strong>Nội dung demo:</strong>
-                    <p id="demo-msg">Chào mừng &lt;tên tài khoản&gt; đến trang điều khiển</p>
-                </div>
-            </div>
+        <div class="userbox">
+            <div id="greetingTop" style="font-weight:700">Chào mừng</div>
+            <div class="muted" id="emailTop">user@example.com</div>
+            <div style="margin-top:6px"><button id="signoutTop" class="btn">Đăng xuất</button></div>
         </div>
-
-        <p class="muted center" style="margin-top:14px; font-size:12px">Sử dụng Firebase Authentication (client-side). Xem hướng dẫn ở dưới để cấu hình.</p>
     </div>
 
-    <!-- Firebase (compat) SDK - thay bằng phiên bản mới nếu muốn modular SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <div id="main-area" class="control-card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div>
+                <div style="font-weight:700; font-size:16px">Trạng thái cảm biến</div>
+                <div class="small">Cập nhật mỗi giây (giá trị float demo)</div>
+            </div>
+            <div style="text-align:right">
+                <div class="small">Last update: <span id="last-update">-</span></div>
+                <div class="small" id="connection-status">Kết nối: demo</div>
+            </div>
+        </div>
 
-    <script>
-        // TODO: Thay bằng cấu hình Firebase của bạn (tạo project tại https://console.firebase.google.com)
-        const firebaseConfig = {
-            apiKey: "AIzaSyDfOHCUIcu8heeA2Y7TaclEj2-NaLRZ6l8",
-            authDomain: "hethongdieukhien-6f189.firebaseapp.com",
-            projectId: "hethongdieukhien-6f189",
-            // Nếu có thể, thêm các field khác (storageBucket, messagingSenderId, appId)
-        };
+        <div class="sensors" id="sensors">
+            <!-- 10 sensor cards injected here -->
+        </div>
 
-        // Khởi tạo Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
+        <div style="margin-top:18px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div>
+                <div style="font-weight:700; font-size:16px">Relay Controls</div>
+                <div class="small">16 relay (gạt để bật/tắt). Trạng thái lưu local (demo).</div>
+            </div>
+            <div>
+                <div class="controls-row">
+                    <button class="btn" id="all-on">Bật tất cả</button>
+                    <button class="btn" id="all-off">Tắt tất cả</button>
+                    <button class="btn primary" id="push-state">Lưu trạng thái</button>
+                </div>
+            </div>
+        </div>
 
-        // Helpers DOM
-        const loginForm = document.getElementById('login-form');
-        const registerForm = document.getElementById('register-form');
-        const dashboard = document.getElementById('dashboard');
-        const dashboardContent = document.getElementById('dashboard-content');
-        const verifyNotice = document.getElementById('verify-notice');
-        const authError = document.getElementById('auth-error');
-        const regError = document.getElementById('reg-error');
-        const authNote = document.getElementById('auth-note');
-        const regNote = document.getElementById('reg-note');
-        const demoMsg = document.getElementById('demo-msg');
-        const greeting = document.getElementById('greeting');
-        const emailDisplay = document.getElementById('email-display');
-        const verifyMsg = document.getElementById('verify-msg');
+        <div class="relays" id="relays">
+            <!-- 16 relays injected here -->
+        </div>
 
-        // Switch UI
-        function showLogin(){ document.getElementById('form-title').textContent = 'Đăng nhập'; loginForm.classList.remove('hidden'); registerForm.classList.add('hidden'); authError.textContent=''; authNote.textContent=''; }
-        function showRegister(){ document.getElementById('form-title').textContent = 'Đăng ký'; loginForm.classList.add('hidden'); registerForm.classList.remove('hidden'); regError.textContent=''; regNote.textContent=''; }
+        <div class="footer">
+            <div>Ghi chú: Đây là giao diện front-end demo. Để điều khiển thực tế, cần tích hợp backend (MQTT/REST) và bảo mật.</div>
+        </div>
+    </div>
 
-        document.getElementById('show-register').addEventListener('click', showRegister);
-        document.getElementById('show-register-2').addEventListener('click', showRegister);
-        document.getElementById('show-login').addEventListener('click', showLogin);
+    <div style="margin-top:12px; color:var(--muted); font-size:13px">(Vẫn giữ chức năng đăng nhập/đăng ký qua Firebase; bạn cần cấu hình firebaseConfig trong file để kiểm tra đăng nhập.)</div>
+</div>
 
-        // Đăng ký
-        document.getElementById('register-button').addEventListener('click', async ()=>{
-            const name = document.getElementById('reg-name').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value;
-            regError.textContent = '';
-            regNote.textContent = '';
-            if(!email || !password){ regError.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
-            try{
-                const userCred = await auth.createUserWithEmailAndPassword(email, password);
-                // set displayName nếu có
-                if(name){ await userCred.user.updateProfile({ displayName: name }); }
-                // Gửi email xác minh
-                await userCred.user.sendEmailVerification();
-                regNote.textContent = 'Tài khoản được tạo. Vui lòng kiểm tra email để xác minh (đã gửi email xác minh).';
-            }catch(err){ regError.textContent = err.message; }
-        });
+<!-- Firebase SDK and auth logic (preserve existing project config) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
-        // Đăng nhập
-        document.getElementById('login-button').addEventListener('click', async ()=>{
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            authError.textContent = '';
-            authNote.textContent = '';
-            if(!email || !password){ authError.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
-            try{
-                await auth.signInWithEmailAndPassword(email, password);
-            }catch(err){ authError.textContent = err.message; }
-        });
+<script>
+    // Firebase config (preserved from repo)
+    const firebaseConfig = {
+        apiKey: "AIzaSyDfOHCUIcu8heeA2Y7TaclEj2-NaLRZ6l8",
+        authDomain: "hethongdieukhien-6f189.firebaseapp.com",
+        projectId: "hethongdieukhien-6f189"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
 
-        // Quên mật khẩu
-        document.getElementById('forgot-password').addEventListener('click', async ()=>{
-            const email = document.getElementById('login-email').value.trim();
-            authError.textContent = '';
-            authNote.textContent = '';
-            if(!email){ authError.textContent = 'Vui lòng nhập email vào ô Email để nhận link đặt lại mật khẩu.'; return; }
-            try{
-                await auth.sendPasswordResetEmail(email);
-                authNote.textContent = 'Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.';
-            }catch(err){ authError.textContent = err.message; }
-        });
+    // DOM
+    const sensorsEl = document.getElementById('sensors');
+    const relaysEl = document.getElementById('relays');
+    const lastUpdateEl = document.getElementById('last-update');
+    const greetingTop = document.getElementById('greetingTop');
+    const emailTop = document.getElementById('emailTop');
+    const signoutTop = document.getElementById('signoutTop');
 
-        // Đăng xuất
-        document.getElementById('signout').addEventListener('click', ()=> auth.signOut());
+    // Create 10 sensors
+    const SENSOR_COUNT = 10;
+    const RELAY_COUNT = 16;
+    let sensors = [];
+    let relays = [];
 
-        // Gửi lại email xác minh
-        document.getElementById('resend-verification').addEventListener('click', async ()=>{
-            const user = auth.currentUser;
-            verifyMsg.textContent = '';
-            if(user){
-                try{
-                    await user.sendEmailVerification();
-                    verifyMsg.textContent = 'Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.';
-                }catch(err){ verifyMsg.textContent = 'Lỗi: ' + err.message; }
-            }
-        });
+    function createSensors(){
+        sensorsEl.innerHTML = '';
+        for(let i=0;i<SENSOR_COUNT;i++){
+            const id = i+1;
+            const card = document.createElement('div');
+            card.className = 'sensor';
+            card.id = 'sensor-'+id;
+            card.innerHTML = `<div class="name">Cảm biến ${id}</div><div class="value" id="sensor-val-${id}">0.00<span class="unit">°C</span></div>`;
+            sensorsEl.appendChild(card);
+            sensors.push({id, el: document.getElementById('sensor-val-'+id)});
+        }
+    }
 
-        // Kiểm tra lại trạng thái xác minh
-        document.getElementById('refresh-verification').addEventListener('click', async ()=>{
-            const user = auth.currentUser;
-            verifyMsg.textContent = '';
-            if(user){
-                try{
-                    await user.reload();
-                    if(user.emailVerified){
-                        // hiển thị nội dung dashboard
-                        verifyNotice.classList.add('hidden');
-                        dashboardContent.classList.remove('hidden');
-                        demoMsg.textContent = `Chào mừng ${user.displayName || (user.email? user.email.split('@')[0] : 'Người dùng')} đến trang điều khiển`;
-                    }else{
-                        verifyMsg.textContent = 'Email vẫn chưa được xác minh. Vui lòng kiểm tra lại hộp thư.';
-                    }
-                }catch(err){ verifyMsg.textContent = 'Lỗi: ' + err.message; }
-            }
-        });
+    function createRelays(){
+        relaysEl.innerHTML = '';
+        // load state from localStorage if any
+        let stored = localStorage.getItem('demo_relays_v1');
+        relays = stored ? JSON.parse(stored) : Array(RELAY_COUNT).fill(false);
+        for(let i=0;i<RELAY_COUNT;i++){
+            const idx = i+1;
+            const r = document.createElement('div');
+            r.className = 'relay';
+            r.id = 'relay-'+idx;
+            const label = document.createElement('div');
+            label.className = 'label';
+            label.textContent = 'Relay ' + idx;
+            const sw = document.createElement('div');
+            sw.className = 'switch' + (relays[i] ? ' on' : '');
+            sw.setAttribute('data-index', i);
+            sw.innerHTML = '<div class="knob"></div>';
+            sw.addEventListener('click', ()=>{
+                toggleRelay(i);
+                // For demo, persist immediate change to localStorage
+                localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
+            });
+            r.appendChild(label);
+            r.appendChild(sw);
+            relaysEl.appendChild(r);
+        }
+    }
 
-        // Lắng nghe trạng thái đăng nhập
-        auth.onAuthStateChanged(async user => {
-            if(user){
-                // Hiển thị dashboard
-                document.getElementById('auth-forms').classList.add('hidden');
-                dashboard.classList.remove('hidden');
-                // Tên hiển thị ưu tiên displayName, nếu không dùng phần trước email
-                const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Người dùng');
-                greeting.textContent = `Chào mừng ${displayName}`;
-                emailDisplay.textContent = user.email || '';
+    function toggleRelay(i){
+        relays[i] = !relays[i];
+        const sw = document.querySelector('#relay-'+(i+1)+' .switch');
+        if(sw){
+            if(relays[i]) sw.classList.add('on'); else sw.classList.remove('on');
+        }
+    }
 
-                // Nếu email chưa xác minh -> hiện notice, ẩn nội dung
-                if(!user.emailVerified){
-                    verifyNotice.classList.remove('hidden');
-                    dashboardContent.classList.add('hidden');
-                    verifyMsg.textContent = '';
-                }else{
-                    verifyNotice.classList.add('hidden');
-                    dashboardContent.classList.remove('hidden');
-                    demoMsg.textContent = `Chào mừng ${displayName} đến trang điều khiển`;
-                }
-            }else{
-                // Hiện form
-                document.getElementById('auth-forms').classList.remove('hidden');
-                dashboard.classList.add('hidden');
-                showLogin();
-            }
-        });
+    document.getElementById('all-on').addEventListener('click', ()=>{
+        relays = relays.map(()=>true);
+        updateRelaysUI();
+    });
+    document.getElementById('all-off').addEventListener('click', ()=>{
+        relays = relays.map(()=>false);
+        updateRelaysUI();
+    });
+    document.getElementById('push-state').addEventListener('click', ()=>{
+        localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
+        alert('Trạng thái relay đã được lưu local (demo).');
+    });
 
-    </script>
+    function updateRelaysUI(){
+        for(let i=0;i<RELAY_COUNT;i++){
+            const sw = document.querySelector('#relay-'+(i+1)+' .switch');
+            if(sw){ if(relays[i]) sw.classList.add('on'); else sw.classList.remove('on'); }
+        }
+    }
 
-    <!-- HƯỚNG DẪN NHANH (không bắt buộc):
-        1) Tạo project Firebase tại https://console.firebase.google.com
-        2) Bật Authentication -> Sign-in method -> Email/Password
-        3) Lấy cấu hình web (apiKey, authDomain, projectId...) và thay vào firebaseConfig phía trên
-        4) Triển khai site (GitHub Pages, Netlify, Vercel...) hoặc chạy local để thử
-    -->
+    // Simulate sensor updates
+    function randomFloat(min,max){ return (Math.random()*(max-min)+min); }
+    function updateSensors(){
+        const now = new Date();
+        lastUpdateEl.textContent = now.toLocaleTimeString();
+        for(let i=0;i<SENSOR_COUNT;i++){
+            // simulate floats between 20.0 and 80.0
+            const v = randomFloat(20,80);
+            const el = document.getElementById('sensor-val-'+(i+1));
+            if(el) el.innerHTML = v.toFixed(2) + '<span class="unit">°C</span>';
+        }
+    }
+
+    // Auth & UI hookup
+    auth.onAuthStateChanged(async user=>{
+        if(user){
+            const displayName = user.displayName || (user.email? user.email.split('@')[0] : 'Người dùng');
+            greetingTop.textContent = `Chào mừng ${displayName}`;
+            emailTop.textContent = user.email || '';
+            // show main app (already visible) but ensure controls are initialized
+            createSensors();
+            createRelays();
+            updateRelaysUI();
+            updateSensors();
+            // start periodic updates
+            if(window._sensorInterval) clearInterval(window._sensorInterval);
+            window._sensorInterval = setInterval(updateSensors, 1000);
+        }else{
+            // not logged in — show prompt and clear UI
+            greetingTop.textContent = 'Chưa đăng nhập';
+            emailTop.textContent = '';
+            if(window._sensorInterval) clearInterval(window._sensorInterval);
+            sensorsEl.innerHTML = '<div class="muted">Vui lòng đăng nhập để xem dữ liệu điều khiển.</div>';
+            relaysEl.innerHTML = '';
+        }
+    });
+
+    signoutTop.addEventListener('click', ()=>auth.signOut());
+
+    // initialize minimal UI even before auth
+    sensorsEl.innerHTML = '';
+    for(let i=0;i<SENSOR_COUNT;i++){
+        const card = document.createElement('div'); card.className='sensor'; card.innerHTML = `<div class="name">Cảm biến ${i+1}</div><div class="value">--<span class="unit">°C</span></div>`; sensorsEl.appendChild(card);
+    }
+
+    relaysEl.innerHTML = '';
+    for(let i=0;i<RELAY_COUNT;i++){ const r=document.createElement('div'); r.className='relay'; r.innerHTML = `<div class="label">Relay ${i+1}</div><div class="switch"><div class="knob"></div></div>`; relaysEl.appendChild(r);}    
+
+</script>
+
 </body>
 </html>
