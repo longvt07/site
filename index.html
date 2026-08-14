@@ -16,6 +16,7 @@
         .center{text-align:center}
         .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
         .danger{color:#c0392b}
+        .notice{background:#fff8e1; border-left:4px solid #f1c40f; padding:10px; border-radius:6px; margin-bottom:12px}
     </style>
 </head>
 <body>
@@ -34,8 +35,12 @@
                     <button id="login-button">Đăng nhập</button>
                     <button class="link" id="show-register">Đăng ký</button>
                 </div>
-                <div class="muted">Chưa có tài khoản? <button class="link" id="show-register-2">Tạo tài khoản</button></div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                    <div class="muted">Chưa có tài khoản? <button class="link" id="show-register-2">Tạo tài khoản</button></div>
+                    <button class="link" id="forgot-password">Quên mật khẩu?</button>
+                </div>
                 <p id="auth-error" class="danger" style="margin-top:10px"></p>
+                <p id="auth-note" class="muted" style="margin-top:6px"></p>
             </div>
 
             <!-- Register form -->
@@ -48,6 +53,7 @@
                     <button class="link" id="show-login">Quay lại</button>
                 </div>
                 <p id="reg-error" class="danger" style="margin-top:10px"></p>
+                <p id="reg-note" class="muted" style="margin-top:6px"></p>
             </div>
         </div>
 
@@ -62,7 +68,18 @@
                     <button id="signout">Đăng xuất</button>
                 </div>
             </div>
-            <div>
+
+            <!-- Verification notice shown when email not verified -->
+            <div id="verify-notice" class="notice hidden">
+                <p><strong>Vui lòng xác nhận email của bạn trước khi truy cập đầy đủ trang điều khiển.</strong></p>
+                <div style="display:flex; gap:8px; margin-top:8px">
+                    <button id="resend-verification">Gửi lại email xác minh</button>
+                    <button id="refresh-verification" class="link">Đã xác minh? Kiểm tra lại</button>
+                </div>
+                <p id="verify-msg" class="muted" style="margin-top:8px"></p>
+            </div>
+
+            <div id="dashboard-content" class="hidden">
                 <p>Đây là trang điều khiển demo. Nội dung tĩnh có thể được thay bằng giao diện quản trị thực tế sau này.</p>
                 <div style="background:#f3f9ff; padding:12px; border-radius:6px; border:1px solid #d3e7ff">
                     <strong>Nội dung demo:</strong>
@@ -95,15 +112,20 @@
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
         const dashboard = document.getElementById('dashboard');
+        const dashboardContent = document.getElementById('dashboard-content');
+        const verifyNotice = document.getElementById('verify-notice');
         const authError = document.getElementById('auth-error');
         const regError = document.getElementById('reg-error');
+        const authNote = document.getElementById('auth-note');
+        const regNote = document.getElementById('reg-note');
         const demoMsg = document.getElementById('demo-msg');
         const greeting = document.getElementById('greeting');
         const emailDisplay = document.getElementById('email-display');
+        const verifyMsg = document.getElementById('verify-msg');
 
         // Switch UI
-        function showLogin(){ document.getElementById('form-title').textContent = 'Đăng nhập'; loginForm.classList.remove('hidden'); registerForm.classList.add('hidden'); authError.textContent=''; }
-        function showRegister(){ document.getElementById('form-title').textContent = 'Đăng ký'; loginForm.classList.add('hidden'); registerForm.classList.remove('hidden'); regError.textContent=''; }
+        function showLogin(){ document.getElementById('form-title').textContent = 'Đăng nhập'; loginForm.classList.remove('hidden'); registerForm.classList.add('hidden'); authError.textContent=''; authNote.textContent=''; }
+        function showRegister(){ document.getElementById('form-title').textContent = 'Đăng ký'; loginForm.classList.add('hidden'); registerForm.classList.remove('hidden'); regError.textContent=''; regNote.textContent=''; }
 
         document.getElementById('show-register').addEventListener('click', showRegister);
         document.getElementById('show-register-2').addEventListener('click', showRegister);
@@ -115,11 +137,15 @@
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value;
             regError.textContent = '';
+            regNote.textContent = '';
             if(!email || !password){ regError.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
             try{
                 const userCred = await auth.createUserWithEmailAndPassword(email, password);
                 // set displayName nếu có
                 if(name){ await userCred.user.updateProfile({ displayName: name }); }
+                // Gửi email xác minh
+                await userCred.user.sendEmailVerification();
+                regNote.textContent = 'Tài khoản được tạo. Vui lòng kiểm tra email để xác minh (đã gửi email xác minh).';
             }catch(err){ regError.textContent = err.message; }
         });
 
@@ -128,17 +154,61 @@
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             authError.textContent = '';
+            authNote.textContent = '';
             if(!email || !password){ authError.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
             try{
                 await auth.signInWithEmailAndPassword(email, password);
             }catch(err){ authError.textContent = err.message; }
         });
 
+        // Quên mật khẩu
+        document.getElementById('forgot-password').addEventListener('click', async ()=>{
+            const email = document.getElementById('login-email').value.trim();
+            authError.textContent = '';
+            authNote.textContent = '';
+            if(!email){ authError.textContent = 'Vui lòng nhập email vào ô Email để nhận link đặt lại mật khẩu.'; return; }
+            try{
+                await auth.sendPasswordResetEmail(email);
+                authNote.textContent = 'Email đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư.';
+            }catch(err){ authError.textContent = err.message; }
+        });
+
         // Đăng xuất
         document.getElementById('signout').addEventListener('click', ()=> auth.signOut());
 
+        // Gửi lại email xác minh
+        document.getElementById('resend-verification').addEventListener('click', async ()=>{
+            const user = auth.currentUser;
+            verifyMsg.textContent = '';
+            if(user){
+                try{
+                    await user.sendEmailVerification();
+                    verifyMsg.textContent = 'Đã gửi lại email xác minh. Vui lòng kiểm tra hộp thư.';
+                }catch(err){ verifyMsg.textContent = 'Lỗi: ' + err.message; }
+            }
+        });
+
+        // Kiểm tra lại trạng thái xác minh
+        document.getElementById('refresh-verification').addEventListener('click', async ()=>{
+            const user = auth.currentUser;
+            verifyMsg.textContent = '';
+            if(user){
+                try{
+                    await user.reload();
+                    if(user.emailVerified){
+                        // hiển thị nội dung dashboard
+                        verifyNotice.classList.add('hidden');
+                        dashboardContent.classList.remove('hidden');
+                        demoMsg.textContent = `Chào mừng ${user.displayName || (user.email? user.email.split('@')[0] : 'Người dùng')} đến trang điều khiển`;
+                    }else{
+                        verifyMsg.textContent = 'Email vẫn chưa được xác minh. Vui lòng kiểm tra lại hộp thư.';
+                    }
+                }catch(err){ verifyMsg.textContent = 'Lỗi: ' + err.message; }
+            }
+        });
+
         // Lắng nghe trạng thái đăng nhập
-        auth.onAuthStateChanged(user => {
+        auth.onAuthStateChanged(async user => {
             if(user){
                 // Hiển thị dashboard
                 document.getElementById('auth-forms').classList.add('hidden');
@@ -147,7 +217,17 @@
                 const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Người dùng');
                 greeting.textContent = `Chào mừng ${displayName}`;
                 emailDisplay.textContent = user.email || '';
-                demoMsg.textContent = `Chào mừng ${displayName} đến trang điều khiển`;
+
+                // Nếu email chưa xác minh -> hiện notice, ẩn nội dung
+                if(!user.emailVerified){
+                    verifyNotice.classList.remove('hidden');
+                    dashboardContent.classList.add('hidden');
+                    verifyMsg.textContent = '';
+                }else{
+                    verifyNotice.classList.add('hidden');
+                    dashboardContent.classList.remove('hidden');
+                    demoMsg.textContent = `Chào mừng ${displayName} đến trang điều khiển`;
+                }
             }else{
                 // Hiện form
                 document.getElementById('auth-forms').classList.remove('hidden');
