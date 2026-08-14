@@ -110,9 +110,10 @@
     <div style="margin-top:12px; color:var(--muted); font-size:13px">(Vẫn giữ chức năng đăng nhập/đăng ký qua Firebase; bạn cần cấu hình firebaseConfig trong file để kiểm tra đăng nhập.)</div>
 </div>
 
-<!-- Firebase SDK and auth logic (preserve existing project config) -->
+<!-- Firebase SDKs: Auth + Firestore (compat) -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
 <script>
     // Firebase config (preserved from repo)
@@ -123,6 +124,7 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db = firebase.firestore();
 
     // DOM
     const sensorsEl = document.getElementById('sensors');
@@ -131,15 +133,20 @@
     const greetingTop = document.getElementById('greetingTop');
     const emailTop = document.getElementById('emailTop');
     const signoutTop = document.getElementById('signoutTop');
+    const connectionStatusEl = document.getElementById('connection-status');
 
     // Create 10 sensors
     const SENSOR_COUNT = 10;
     const RELAY_COUNT = 16;
     let sensors = [];
     let relays = [];
+    const DEVICE_ID = 'demo_device_1'; // change if you have a real device id
+    let currentUser = null;
+    let deviceUnsub = null;
 
     function createSensors(){
         sensorsEl.innerHTML = '';
+        sensors = [];
         for(let i=0;i<SENSOR_COUNT;i++){
             const id = i+1;
             const card = document.createElement('div');
@@ -168,10 +175,16 @@
             sw.className = 'switch' + (relays[i] ? ' on' : '');
             sw.setAttribute('data-index', i);
             sw.innerHTML = '<div class="knob"></div>';
-            sw.addEventListener('click', ()=>{
+            sw.addEventListener('click', async ()=>{
                 toggleRelay(i);
-                // For demo, persist immediate change to localStorage
+                // persist locally
                 localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
+                // push change to Firestore if user signed in
+                if(currentUser){
+                    try{
+                        await db.collection('devices').doc(DEVICE_ID).set({ relays }, { merge: true });
+                    }catch(err){ console.error('Firestore write failed', err); }
+                }
             });
             r.appendChild(label);
             r.appendChild(sw);
@@ -187,17 +200,28 @@
         }
     }
 
-    document.getElementById('all-on').addEventListener('click', ()=>{
+    document.getElementById('all-on').addEventListener('click', async ()=>{
         relays = relays.map(()=>true);
         updateRelaysUI();
+        localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
+        if(currentUser){ await db.collection('devices').doc(DEVICE_ID).set({ relays }, { merge: true }); }
     });
-    document.getElementById('all-off').addEventListener('click', ()=>{
+    document.getElementById('all-off').addEventListener('click', async ()=>{
         relays = relays.map(()=>false);
         updateRelaysUI();
-    });
-    document.getElementById('push-state').addEventListener('click', ()=>{
         localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
-        alert('Trạng thái relay đã được lưu local (demo).');
+        if(currentUser){ await db.collection('devices').doc(DEVICE_ID).set({ relays }, { merge: true }); }
+    });
+    document.getElementById('push-state').addEventListener('click', async ()=>{
+        localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
+        if(currentUser){
+            try{
+                await db.collection('devices').doc(DEVICE_ID).set({ relays }, { merge: true });
+                alert('Trạng thái relay đã được lưu vào Firestore.');
+            }catch(err){ alert('Lỗi khi lưu vào Firestore: ' + err.message); }
+        }else{
+            alert('Trạng thái relay đã được lưu local (demo). Đăng nhập để sync tới Firestore.');
+        }
     });
 
     function updateRelaysUI(){
@@ -207,9 +231,9 @@
         }
     }
 
-    // Simulate sensor updates
+    // Simulate sensor updates locally, but also accept sensor values from Firestore if available
     function randomFloat(min,max){ return (Math.random()*(max-min)+min); }
-    function updateSensors(){
+    function updateSensorsLocal(){
         const now = new Date();
         lastUpdateEl.textContent = now.toLocaleTimeString();
         for(let i=0;i<SENSOR_COUNT;i++){
@@ -220,20 +244,48 @@
         }
     }
 
+    // Subscribe to device document in Firestore to receive relays and sensors updates
+    function subscribeToDevice(deviceId){
+        if(deviceUnsub) deviceUnsub();
+        deviceUnsub = db.collection('devices').doc(deviceId).onSnapshot(doc => {
+            if(!doc.exists){ connectionStatusEl.textContent = 'Kết nối: device doc không tồn tại (Firestore)'; return; }
+            connectionStatusEl.textContent = 'Kết nối: Firestore (realtime)';
+            const data = doc.data() || {};
+            if(Array.isArray(data.relays) && data.relays.length === RELAY_COUNT){
+                relays = data.relays.slice();
+                localStorage.setItem('demo_relays_v1', JSON.stringify(relays));
+                updateRelaysUI();
+            }
+            if(Array.isArray(data.sensors) && data.sensors.length === SENSOR_COUNT){
+                // update sensors values from Firestore
+                data.sensors.forEach((v, idx)=>{
+                    const el = document.getElementById('sensor-val-'+(idx+1));
+                    if(el) el.innerHTML = parseFloat(v).toFixed(2) + '<span class="unit">°C</span>';
+                });
+                lastUpdateEl.textContent = new Date().toLocaleTimeString();
+            }
+        }, err => {
+            console.error('Firestore listener error', err);
+            connectionStatusEl.textContent = 'Kết nối: lỗi Firestore';
+        });
+    }
+
     // Auth & UI hookup
     auth.onAuthStateChanged(async user=>{
+        currentUser = user;
         if(user){
             const displayName = user.displayName || (user.email? user.email.split('@')[0] : 'Người dùng');
             greetingTop.textContent = `Chào mừng ${displayName}`;
             emailTop.textContent = user.email || '';
-            // show main app (already visible) but ensure controls are initialized
+            // initialize UI
             createSensors();
             createRelays();
             updateRelaysUI();
-            updateSensors();
-            // start periodic updates
+            // start periodic local updates only if Firestore doesn't provide sensors
             if(window._sensorInterval) clearInterval(window._sensorInterval);
-            window._sensorInterval = setInterval(updateSensors, 1000);
+            window._sensorInterval = setInterval(updateSensorsLocal, 1000);
+            // subscribe to Firestore device doc for realtime updates
+            subscribeToDevice(DEVICE_ID);
         }else{
             // not logged in — show prompt and clear UI
             greetingTop.textContent = 'Chưa đăng nhập';
@@ -241,6 +293,8 @@
             if(window._sensorInterval) clearInterval(window._sensorInterval);
             sensorsEl.innerHTML = '<div class="muted">Vui lòng đăng nhập để xem dữ liệu điều khiển.</div>';
             relaysEl.innerHTML = '';
+            if(deviceUnsub) { deviceUnsub(); deviceUnsub = null; }
+            connectionStatusEl.textContent = 'Kết nối: demo';
         }
     });
 
