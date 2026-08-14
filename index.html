@@ -2,126 +2,167 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chương 2.1: Quy trình Ăn mòn Ướt (Wet Etching)</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/simple.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Site - Đăng nhập / Điều khiển (Demo)</title>
     <style>
-        .reveal .slide-background { background-color: #fdfdfd; }
-        .reveal h2 { color: #2c3e50; font-size: 1.3em; text-transform: uppercase; font-weight: bold; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-bottom: 30px; text-align: center; }
-        .reveal p, .reveal li { font-size: 0.8em; text-align: left; color: #34495e; line-height: 1.5; margin-bottom: 15px; }
-        .reveal ul { display: block; margin-left: 1em; }
-        .highlight-box { background: #e8f6f8; border-left: 6px solid #3498db; padding: 15px; margin: 20px 0; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .highlight-box p { margin: 0; font-style: italic; color: #2980b9; text-align: left; }
-        .warning-box { background: #fff0f0; border-left: 6px solid #e74c3c; padding: 15px; margin: 20px 0; border-radius: 4px; }
-        .warning-box p, .warning-box li { margin: 0; font-weight: bold; color: #c0392b; text-align: left; margin-bottom: 5px;}
-        .emphasis { color: #e74c3c; font-weight: bold; }
+        body{font-family: Arial, Helvetica, sans-serif; background:#f6f8fa; color:#222; margin:0; padding:0; display:flex; align-items:center; justify-content:center; height:100vh}
+        .card{background:#fff; padding:24px; border-radius:8px; box-shadow:0 6px 18px rgba(15,23,42,0.08); width:360px;}
+        h1{font-size:18px; margin:0 0 12px}
+        input[type=text], input[type=email], input[type=password]{width:100%; padding:10px; margin:8px 0 12px; box-sizing:border-box; border:1px solid #dfe6ee; border-radius:6px}
+        button{background:#2d8cff; color:#fff; border:none; padding:10px 14px; border-radius:6px; cursor:pointer}
+        .link{background:none; border:none; color:#2d8cff; cursor:pointer; padding:0; margin-left:6px}
+        .muted{color:#6b7280; font-size:13px}
+        .hidden{display:none}
+        .center{text-align:center}
+        .topbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:12px}
+        .danger{color:#c0392b}
     </style>
 </head>
 <body>
-    <div class="reveal">
-        <div class="slides">
+    <div class="card" id="auth-card">
+        <div id="auth-forms">
+            <div class="topbar">
+                <h1 id="form-title">Đăng nhập</h1>
+                <div class="muted">Demo - Email/Password</div>
+            </div>
 
-            <!-- SLIDE 1 -->
-            <section>
-                <h2>Mục tiêu Bài học (Phần 2.1)</h2>
-                <p><strong>Kiến thức:</strong></p>
-                <ul>
-                    <li>Hiểu được nguyên lý hoạt động của phương pháp ăn mòn bằng hóa chất lỏng.</li>
-                    <li>Giải thích được hiện tượng "ăn lẹm" (Undercut) gây ra bởi tính đẳng hướng.</li>
-                </ul>
-                <p><strong>Năng lực nghề nghiệp:</strong></p>
-                <ul>
-                    <li>Nhận biết được các hóa chất ăn mòn cơ bản được sử dụng trong nhà máy.</li>
-                    <li>Nắm vững tuyệt đối quy trình an toàn khi làm việc tại hệ thống bồn rửa (Wet Bench).</li>
-                </ul>
-            </section>
-
-            <!-- SLIDE 2 -->
-            <section>
-                <h2>1. Khái niệm & Nguyên lý hoạt động</h2>
-                <p><strong>Ăn mòn ướt (Wet Etching) là gì?</strong> Là phương pháp nhúng toàn bộ phiến Wafer vào bể chứa dung dịch hóa chất (axit/bazơ) để hòa tan phần vật liệu không được bảo vệ.</p>
-                
-                <div class="highlight-box">
-                    <p>🍋 VÍ VON TRỰC QUAN: Quá trình này giống hệt như việc bạn nhỏ một giọt nước chanh (axit) lên một viên phấn. Nơi nào có nước chanh, phấn sẽ sủi bọt, tan ra và bị cuốn trôi.</p>
+            <!-- Login form -->
+            <div id="login-form">
+                <input type="email" id="login-email" placeholder="Email" autocomplete="username">
+                <input type="password" id="login-password" placeholder="Mật khẩu" autocomplete="current-password">
+                <div style="display:flex; gap:8px; margin-bottom:10px">
+                    <button id="login-button">Đăng nhập</button>
+                    <button class="link" id="show-register">Đăng ký</button>
                 </div>
-                
-                <ul>
-                    <li><strong>Bản chất:</strong> Hoàn toàn là phản ứng hóa học. Vật liệu rắn trên Wafer phản ứng với chất lỏng, biến thành chất hòa tan hoặc thể khí.</li>
-                </ul>
-            </section>
+                <div class="muted">Chưa có tài khoản? <button class="link" id="show-register-2">Tạo tài khoản</button></div>
+                <p id="auth-error" class="danger" style="margin-top:10px"></p>
+            </div>
 
-            <!-- SLIDE 3 -->
-            <section>
-                <h2>2. Đặc điểm cốt lõi: Tính đẳng hướng</h2>
-                <p><strong>Tính đẳng hướng (Isotropic) là gì?</strong></p>
-                <p>Hóa chất lỏng sẽ ăn mòn <span class="emphasis">theo mọi hướng với tốc độ như nhau</span> (vừa ăn sâu xuống đáy, vừa ăn lan ngang sang hai bên vách).</p>
-                
-                <ul>
-                    <li><strong>Hiện tượng "Ăn lẹm" (Undercut):</strong> Hóa chất sẽ khoét rỗng luồn vào phần vật liệu nằm ngay bên dưới lớp mặt nạ cản quang.</li>
-                    <li><strong>Hậu quả:</strong> Làm cho đường mạch thực tế hẹp hơn thiết kế ban đầu. Nếu hố khoét quá sâu, lớp cản quang bên trên sẽ bị sập.</li>
-                </ul>
-            </section>
-
-            <!-- SLIDE 4 -->
-            <section>
-                <h2>3. Thiết bị & Hóa chất phổ biến</h2>
-                <p><strong>Hệ thống bồn nhúng (Wet Bench):</strong> Trang bị robot gắp nhúng tự động, hệ thống sục khí và siêu âm giúp làm sạch cặn bẩn.</p>
-                
-                <p><strong>Các "cặp bài trùng" Vật liệu - Hóa chất:</strong></p>
-                <ul>
-                    <li><strong>Axit Flohydric (HF):</strong> Chuyên dùng để ăn mòn lớp cách điện Silicon Dioxide (SiO<sub>2</sub>).</li>
-                    <li><strong>Axit Phosphoric (H<sub>3</sub>PO<sub>4</sub>):</strong> Chuyên dùng để ăn mòn lớp dẫn điện Nhôm (Al).</li>
-                    <li><strong>Kali Hydroxit (KOH):</strong> Chuyên dùng để ăn mòn trực tiếp lớp nền Silicon nguyên bản.</li>
-                </ul>
-            </section>
-
-            <!-- SLIDE 5 -->
-            <section>
-                <h2>4. Ưu điểm và Hạn chế tử huyệt</h2>
-                <p><strong>Ưu điểm: Tại sao vẫn được dùng?</strong></p>
-                <ul>
-                    <li><strong>Độ chọn lọc cao:</strong> Chỉ hòa tan vật liệu đích, không làm xước/hỏng lớp cản quang.</li>
-                    <li>Năng suất cao (xử lý hàng chục Wafer cùng lúc), chi phí rẻ, thiết bị dễ vận hành.</li>
-                </ul>
-                
-                <p><strong>Hạn chế "Tử huyệt":</strong></p>
-                <ul>
-                    <li>Lỗi ăn lẹm (Undercut) khiến nó <strong>không thể</strong> chế tạo vi mạch siêu nhỏ (dưới 3 micromet).</li>
-                    <li>Sinh ra lượng nước thải hóa chất độc hại cực kỳ lớn.</li>
-                </ul>
-            </section>
-
-            <!-- SLIDE 6 -->
-            <section>
-                <h2>5. An toàn vận hành (Khu vực Wet Bench)</h2>
-                
-                <p><strong>Cảnh báo về Axit Flohydric (HF):</strong> HF cực kỳ nguy hiểm vì nó thấm xuyên qua da không gây đau rát ngay, nhưng sẽ ngấm sâu vào phá hủy cấu trúc xương (phản ứng với Canxi).</p>
-
-                <div class="warning-box">
-                    <p>⚠️ QUY ĐỊNH BẮT BUỘC ĐỐI VỚI KỸ THUẬT VIÊN:</p>
-                    <ul style="font-size: 0.9em; margin-top: 10px;">
-                        <li>Luôn mặc đồ bảo hộ chống hóa chất toàn thân (Tạp dề Acid, găng tay cao su dày, kính chắn giọt bắn).</li>
-                        <li>Phải nắm rõ vị trí của vòi tắm khẩn cấp (Emergency Shower).</li>
-                        <li>Luôn chuẩn bị sẵn thuốc bôi giải độc HF (Calcium Gluconate) tại trạm y tế xưởng.</li>
-                    </ul>
+            <!-- Register form -->
+            <div id="register-form" class="hidden">
+                <input type="text" id="reg-name" placeholder="Họ và tên (hiển thị)">
+                <input type="email" id="reg-email" placeholder="Email" autocomplete="username">
+                <input type="password" id="reg-password" placeholder="Mật khẩu (>=6 ký tự)" autocomplete="new-password">
+                <div style="display:flex; gap:8px; margin-bottom:10px">
+                    <button id="register-button">Tạo tài khoản</button>
+                    <button class="link" id="show-login">Quay lại</button>
                 </div>
-            </section>
-
+                <p id="reg-error" class="danger" style="margin-top:10px"></p>
+            </div>
         </div>
+
+        <!-- Dashboard (sau khi đăng nhập) -->
+        <div id="dashboard" class="hidden">
+            <div class="topbar">
+                <div>
+                    <strong id="greeting">Chào mừng</strong>
+                    <div class="muted" id="email-display"></div>
+                </div>
+                <div style="text-align:right">
+                    <button id="signout">Đăng xuất</button>
+                </div>
+            </div>
+            <div>
+                <p>Đây là trang điều khiển demo. Nội dung tĩnh có thể được thay bằng giao diện quản trị thực tế sau này.</p>
+                <div style="background:#f3f9ff; padding:12px; border-radius:6px; border:1px solid #d3e7ff">
+                    <strong>Nội dung demo:</strong>
+                    <p id="demo-msg">Chào mừng &lt;tên tài khoản&gt; đến trang điều khiển</p>
+                </div>
+            </div>
+        </div>
+
+        <p class="muted center" style="margin-top:14px; font-size:12px">Sử dụng Firebase Authentication (client-side). Xem hướng dẫn ở dưới để cấu hình.</p>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+
+    <!-- Firebase (compat) SDK - thay bằng phiên bản mới nếu muốn modular SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
     <script>
-        Reveal.initialize({
-            hash: true,
-            slideNumber: 'c/t',
-            controls: true,
-            progress: true,
-            center: true,
-            width: 1024,
-            height: 768,
-            margin: 0.1
+        // TODO: Thay bằng cấu hình Firebase của bạn (tạo project tại https://console.firebase.google.com)
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            // Nếu có thể, thêm các field khác (storageBucket, messagingSenderId, appId)
+        };
+
+        // Khởi tạo Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Helpers DOM
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+        const dashboard = document.getElementById('dashboard');
+        const authError = document.getElementById('auth-error');
+        const regError = document.getElementById('reg-error');
+        const demoMsg = document.getElementById('demo-msg');
+        const greeting = document.getElementById('greeting');
+        const emailDisplay = document.getElementById('email-display');
+
+        // Switch UI
+        function showLogin(){ document.getElementById('form-title').textContent = 'Đăng nhập'; loginForm.classList.remove('hidden'); registerForm.classList.add('hidden'); authError.textContent=''; }
+        function showRegister(){ document.getElementById('form-title').textContent = 'Đăng ký'; loginForm.classList.add('hidden'); registerForm.classList.remove('hidden'); regError.textContent=''; }
+
+        document.getElementById('show-register').addEventListener('click', showRegister);
+        document.getElementById('show-register-2').addEventListener('click', showRegister);
+        document.getElementById('show-login').addEventListener('click', showLogin);
+
+        // Đăng ký
+        document.getElementById('register-button').addEventListener('click', async ()=>{
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value;
+            regError.textContent = '';
+            if(!email || !password){ regError.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
+            try{
+                const userCred = await auth.createUserWithEmailAndPassword(email, password);
+                // set displayName nếu có
+                if(name){ await userCred.user.updateProfile({ displayName: name }); }
+            }catch(err){ regError.textContent = err.message; }
         });
+
+        // Đăng nhập
+        document.getElementById('login-button').addEventListener('click', async ()=>{
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value;
+            authError.textContent = '';
+            if(!email || !password){ authError.textContent = 'Vui lòng nhập email và mật khẩu.'; return; }
+            try{
+                await auth.signInWithEmailAndPassword(email, password);
+            }catch(err){ authError.textContent = err.message; }
+        });
+
+        // Đăng xuất
+        document.getElementById('signout').addEventListener('click', ()=> auth.signOut());
+
+        // Lắng nghe trạng thái đăng nhập
+        auth.onAuthStateChanged(user => {
+            if(user){
+                // Hiển thị dashboard
+                document.getElementById('auth-forms').classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                // Tên hiển thị ưu tiên displayName, nếu không dùng phần trước email
+                const displayName = user.displayName || (user.email ? user.email.split('@')[0] : 'Người dùng');
+                greeting.textContent = `Chào mừng ${displayName}`;
+                emailDisplay.textContent = user.email || '';
+                demoMsg.textContent = `Chào mừng ${displayName} đến trang điều khiển`;
+            }else{
+                // Hiện form
+                document.getElementById('auth-forms').classList.remove('hidden');
+                dashboard.classList.add('hidden');
+                showLogin();
+            }
+        });
+
     </script>
+
+    <!-- HƯỚNG DẪN NHANH (không bắt buộc):
+        1) Tạo project Firebase tại https://console.firebase.google.com
+        2) Bật Authentication -> Sign-in method -> Email/Password
+        3) Lấy cấu hình web (apiKey, authDomain, projectId...) và thay vào firebaseConfig phía trên
+        4) Triển khai site (GitHub Pages, Netlify, Vercel...) hoặc chạy local để thử
+    -->
 </body>
 </html>
